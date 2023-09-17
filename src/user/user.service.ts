@@ -9,6 +9,6 @@ import { User } from '@prisma/client';
 export class UserService implements IUser {
   constructor(private readonly prisma: PrismaService) {}
   async createUser(dto: CreateUserDTO): Promise<User> {}
-  async updateUser(dto: UpdateUserDTO): Promise<User> {}
-  async deleteUser() {}
+  async updateUser(userId: number, dto: UpdateUserDTO): Promise<User> {}
+  async deleteUser(): Promise<void> {}
 }
