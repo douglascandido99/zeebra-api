@@ -4,6 +4,6 @@ import { UpdateUserDTO } from '../dto/update-user.dto';
 
 export interface IUser {
   createUser(dto: CreateUserDTO): Promise<User>;
-  updateUser(dto: UpdateUserDTO): Promise<User>;
-  deleteUser();
+  updateUser(id: number, dto: UpdateUserDTO): Promise<User>;
+  deleteUser(): Promise<void>;
 }
