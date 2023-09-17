@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:13
-    container_name: zeebra_dev_container
+    container_name: zeebra_dev
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -11,11 +11,11 @@ services:
     volumes:
       - ./data:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - '5443:5432'
     networks:
-      - zeebra_dev_network
+      - zeebra_dev
     restart: always
 
 networks:
-  zeebra_dev_network:
+  zeebra_dev:
     driver: bridge
