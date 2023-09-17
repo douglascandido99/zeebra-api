@@ -18,12 +18,12 @@ model User {
   email     String   @unique
   username  String   @unique
   hash      String
-  posts     Post[]
+  posts     Posts[]
 
   @@map("users")
 }
 
-model Post {
+model Posts {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
