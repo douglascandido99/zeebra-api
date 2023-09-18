@@ -1,9 +1,19 @@
-import { Body, Controller, Delete, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { IUser } from './interfaces/user.interface';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { User } from '@prisma/client';
 import { UserService } from './user.service';
+import { GetUser } from 'src/auth/decorator/get-user.decorator';
+import { JwtGuard } from 'src/auth/guard/jwt.guard';
 
 @Controller('users')
 export class UserController implements IUser {
@@ -14,11 +24,23 @@ export class UserController implements IUser {
     return await this.userService.createUser(dto);
   }
 
-  @Patch()
-  async updateUser(@Body() dto: UpdateUserDTO): Promise<User> {
-    return await this.userService.updateUser(dto);
+  @UseGuards(JwtGuard)
+  @Get('me')
+  async getUser(@GetUser() user: User): Promise<User> {
+    return user;
   }
 
-  @Delete()
-  async deleteUser() {}
+  @UseGuards(JwtGuard)
+  @Patch('me')
+  async updateUser(
+    @GetUser('id') userId: number,
+    @Body() dto: UpdateUserDTO,
+  ): Promise<User> {
+    return await this.userService.updateUser(userId, dto);
+  }
+  @UseGuards(JwtGuard)
+  @Delete('me')
+  async deleteUser(@GetUser('id') userId: number): Promise<{ msg: string }> {
+    return await this.userService.deleteUser(userId);
+  }
 }
