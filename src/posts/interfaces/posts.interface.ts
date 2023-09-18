@@ -12,5 +12,4 @@ export interface IPosts {
     dto: UpdatePostDTO,
   ): Promise<Posts>;
   deletePostById(userId: number, postId: number): Promise<{ msg: string }>;
-  deleteAllPosts(userId: number): Promise<{ msg: string }>;
 }

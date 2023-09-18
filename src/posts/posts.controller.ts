@@ -59,11 +59,4 @@ export class PostsController implements IPosts {
   ): Promise<{ msg: string }> {
     return await this.postsService.deletePostById(userId, postId);
   }
-
-  @Delete()
-  async deleteAllPosts(
-    @GetUser('id') userId: number,
-  ): Promise<{ msg: string }> {
-    return await this.postsService.deleteAllPosts(userId);
-  }
 }

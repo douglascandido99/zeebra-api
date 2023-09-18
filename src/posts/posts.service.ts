@@ -20,20 +20,31 @@ export class PostsService implements IPosts {
   }
 
   async getPostById(userId: number, postId: number): Promise<Posts> {
-    return await this.prisma.posts.findFirst({
+    const post = await this.prisma.posts.findFirst({
       where: {
         id: postId,
         userId,
       },
     });
+
+    if (!post)
+      throw new NotFoundException(
+        `The post you're trying to find doesn't exists.`,
+      );
+
+    return post;
   }
 
   async getAllPosts(userId: number): Promise<Posts[]> {
-    return await this.prisma.posts.findMany({
+    const post = await this.prisma.posts.findMany({
       where: {
         userId,
       },
     });
+
+    if (!post) throw new NotFoundException(`This user doesn't have any posts`);
+
+    return post;
   }
 
   async updatePost(
@@ -84,15 +95,5 @@ export class PostsService implements IPosts {
     });
 
     return { msg: 'Post deleted.' };
-  }
-
-  async deleteAllPosts(userId: number): Promise<{ msg: string }> {
-    await this.prisma.posts.deleteMany({
-      where: {
-        id: userId,
-      },
-    });
-
-    return { msg: 'All posts deleted.' };
   }
 }
