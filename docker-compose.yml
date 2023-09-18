@@ -2,16 +2,16 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:13
+    image: 'postgres:${POSTGRES_VERSION:?err}'
     container_name: zeebra_dev
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?err}
+      POSTGRES_USER: ${POSTGRES_USER:?err}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err}
     volumes:
       - ./data:/var/lib/postgresql/data
     ports:
-      - '5443:5432'
+      - '${POSTGRES_PORT:?err}:5432'
     networks:
       - zeebra_dev
     restart: always
