@@ -14,42 +14,36 @@ export class PostsService implements IPosts {
   constructor(private readonly prisma: PrismaService) {}
 
   async createPost(userId: number, dto: CreatePostDTO): Promise<Posts> {
-    const post = await this.prisma.posts.create({
+    return this.prisma.posts.create({
       data: {
         userId,
         ...dto,
       },
     });
-    return post;
   }
 
   async getPostById(userId: number, postId: number): Promise<Posts> {
-    const post = await this.prisma.posts.findFirst({
-      where: {
-        id: postId,
-        userId,
-      },
-    });
-
-    if (!post)
+    const post = await this.findPostByIdAndUserId(postId, userId);
+    if (!post) {
       throw new NotFoundException(
         `The post you're trying to find doesn't exist.`,
       );
-
+    }
     return post;
   }
 
   async getAllPosts(userId: number): Promise<Posts[]> {
-    const post = await this.prisma.posts.findMany({
+    const posts = await this.prisma.posts.findMany({
       where: {
         userId,
       },
     });
 
-    if (post.length === 0)
+    if (posts.length === 0) {
       throw new NotFoundException(`This user doesn't have any posts`);
+    }
 
-    return post;
+    return posts;
   }
 
   async updatePost(
@@ -57,25 +51,11 @@ export class PostsService implements IPosts {
     postId: number,
     dto: UpdatePostDTO,
   ): Promise<Posts> {
-    const post = await this.prisma.posts.findUnique({
-      where: {
-        id: postId,
-      },
-    });
+    const post = await this.findPostById(postId);
 
-    if (!post) {
-      throw new NotFoundException(
-        `The post you're trying to edit does not exist.`,
-      );
-    }
+    this.validatePostOwnership(post, userId);
 
-    if (post.userId !== userId) {
-      throw new ForbiddenException(
-        `You don't have permission to edit this post.`,
-      );
-    }
-
-    return await this.prisma.posts.update({
+    return this.prisma.posts.update({
       where: {
         id: postId,
       },
@@ -89,23 +69,9 @@ export class PostsService implements IPosts {
     userId: number,
     postId: number,
   ): Promise<{ msg: string }> {
-    const post = await this.prisma.posts.findUnique({
-      where: {
-        id: postId,
-      },
-    });
+    const post = await this.findPostById(postId);
 
-    if (!post) {
-      throw new NotFoundException(
-        `The post you're trying to delete does not exist.`,
-      );
-    }
-
-    if (post.userId !== userId) {
-      throw new ForbiddenException(
-        `You don't have permission to delete this post.`,
-      );
-    }
+    this.validatePostOwnership(post, userId);
 
     await this.prisma.posts.delete({
       where: {
@@ -114,5 +80,39 @@ export class PostsService implements IPosts {
     });
 
     return { msg: 'Post deleted.' };
+  }
+
+  private async findPostById(postId: number): Promise<Posts | null> {
+    return this.prisma.posts.findUnique({
+      where: {
+        id: postId,
+      },
+    });
+  }
+
+  private async findPostByIdAndUserId(
+    postId: number,
+    userId: number,
+  ): Promise<Posts | null> {
+    return this.prisma.posts.findFirst({
+      where: {
+        id: postId,
+        userId,
+      },
+    });
+  }
+
+  private validatePostOwnership(post: Posts | null, userId: number): void {
+    if (!post) {
+      throw new NotFoundException(
+        `The post you're trying to edit/delete does not exist.`,
+      );
+    }
+
+    if (post.userId !== userId) {
+      throw new ForbiddenException(
+        `You don't have permission to edit/delete this post.`,
+      );
+    }
   }
 }

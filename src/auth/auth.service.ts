@@ -17,25 +17,33 @@ export class AuthService implements IAuth {
   ) {}
 
   async loginUser(dto: LoginUserDTO): Promise<{ access_token: string }> {
-    const user = await this.prisma.user.findUnique({
+    const userRecord = await this.prisma.user.findUnique({
       where: {
         username: dto.username,
       },
+      select: {
+        id: true,
+        username: true,
+        hash: true,
+      },
     });
 
-    if (!user)
+    if (!userRecord) {
       throw new NotFoundException(
         `User with username '${dto.username}' not found.`,
       );
+    }
 
-    const passwordMatches = await argon.verify(user.hash, dto.password);
+    const passwordMatches = await argon.verify(userRecord.hash, dto.password);
 
-    if (!passwordMatches) throw new ForbiddenException('Wrong password.');
+    if (!passwordMatches) {
+      throw new ForbiddenException('Wrong password.');
+    }
 
-    return this.signToken(user.id, user.username);
+    return this.signToken(userRecord.id, userRecord.username);
   }
 
-  async signToken(
+  private async signToken(
     userId: number,
     username: string,
   ): Promise<{ access_token: string }> {

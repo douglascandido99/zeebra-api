@@ -24,11 +24,13 @@ export class UserService implements IUser {
       }),
     ]);
 
-    if (existentEmail)
+    if (existentEmail) {
       throw new ConflictException('This e-mail is already in use.');
+    }
 
-    if (existentUsername)
+    if (existentUsername) {
       throw new ConflictException('This username is already in use.');
+    }
 
     try {
       const hash = await argon.hash(dto.password);
@@ -48,6 +50,7 @@ export class UserService implements IUser {
       throw error;
     }
   }
+
   async updateUser(userId: number, dto: UpdateUserDTO): Promise<User> {
     const user = await this.prisma.user.update({
       where: {
@@ -61,6 +64,7 @@ export class UserService implements IUser {
     delete user.hash;
     return user;
   }
+
   async deleteUser(userId: number): Promise<{ msg: string }> {
     await this.prisma.user.delete({
       where: {

@@ -17,12 +17,20 @@ export class JwtStrategy
   }
 
   async validate(payload: { sub: number; username: string }) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: payload.sub,
-      },
-    });
-    delete user.hash;
-    return user;
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: payload.sub,
+        },
+      });
+      if (user) {
+        delete user.hash;
+        return user;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      throw new Error('An error occurred while validating the JWT token.');
+    }
   }
 }
