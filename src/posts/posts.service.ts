@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { IPosts } from './interfaces/posts.interface';
 import { CreatePostDTO } from './dto/create-post.dto';
 import { UpdatePostDTO } from './dto/update-post.dto';
@@ -42,7 +46,8 @@ export class PostsService implements IPosts {
       },
     });
 
-    if (!post) throw new NotFoundException(`This user doesn't have any posts`);
+    if (post.length === 0)
+      throw new NotFoundException(`This user doesn't have any posts`);
 
     return post;
   }
@@ -58,10 +63,17 @@ export class PostsService implements IPosts {
       },
     });
 
-    if (!postId || post.userId !== userId)
+    if (!post) {
       throw new NotFoundException(
-        `The post you're trying to edit does not exists.`,
+        `The post you're trying to edit does not exist.`,
       );
+    }
+
+    if (post.userId !== userId) {
+      throw new ForbiddenException(
+        `You don't have permission to edit this post.`,
+      );
+    }
 
     return await this.prisma.posts.update({
       where: {
@@ -83,10 +95,17 @@ export class PostsService implements IPosts {
       },
     });
 
-    if (!postId || post.userId !== userId)
+    if (!post) {
       throw new NotFoundException(
-        `The post you're trying to delete does not exists.`,
+        `The post you're trying to delete does not exist.`,
       );
+    }
+
+    if (post.userId !== userId) {
+      throw new ForbiddenException(
+        `You don't have permission to delete this post.`,
+      );
+    }
 
     await this.prisma.posts.delete({
       where: {
