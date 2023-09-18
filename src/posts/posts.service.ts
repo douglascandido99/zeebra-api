@@ -33,7 +33,7 @@ export class PostsService implements IPosts {
 
     if (!post)
       throw new NotFoundException(
-        `The post you're trying to find doesn't exists.`,
+        `The post you're trying to find doesn't exist.`,
       );
 
     return post;

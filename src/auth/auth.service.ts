@@ -23,7 +23,7 @@ export class AuthService implements IAuth {
       },
     });
 
-    if (!user) throw new NotFoundException('This username does not exists.');
+    if (!user) throw new NotFoundException(`This username doesn't exist.`);
 
     const passwordMatches = await argon.verify(user.hash, dto.password);
 
