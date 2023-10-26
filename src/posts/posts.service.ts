@@ -1,118 +1,78 @@
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { IPosts } from './interfaces/posts.interface';
+import { PostsRepository } from './repository/posts.repository';
 import { CreatePostDTO } from './dto/create-post.dto';
-import { UpdatePostDTO } from './dto/update-post.dto';
 import { Posts } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { UpdatePostDTO } from './dto/update-post.dto';
+import { MessageResponse } from 'src/common/protocols/interfaces/message-response.interface';
 
 @Injectable()
-export class PostsService implements IPosts {
-  constructor(private readonly prisma: PrismaService) {}
+export class PostsService {
+  constructor(private readonly posts: PostsRepository) {}
 
-  async createPost(userId: number, dto: CreatePostDTO): Promise<Posts> {
-    return this.prisma.posts.create({
-      data: {
-        userId,
-        ...dto,
-      },
-    });
+  async createPost(dto: CreatePostDTO, userId: number): Promise<Posts> {
+    const data = { ...dto, userId };
+    try {
+      return await this.posts.createPost(data);
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to create post');
+    }
   }
 
-  async getPostById(userId: number, postId: number): Promise<Posts> {
-    const post = await this.findPostByIdAndUserId(postId, userId);
-    if (!post) {
-      throw new NotFoundException(
-        `The post you're trying to find doesn't exist.`,
-      );
+  async getPostById(id: string): Promise<Posts> {
+    const post = await this.posts.getPostById(id);
+
+    if (!post) throw new NotFoundException('Post not found');
+    try {
+      return post;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to get post');
     }
-    return post;
   }
 
-  async getAllPosts(userId: number): Promise<Posts[]> {
-    const posts = await this.prisma.posts.findMany({
-      where: {
-        userId,
-      },
-    });
-
-    if (posts.length === 0) {
-      throw new NotFoundException(`This user doesn't have any posts`);
+  async getAllPostsByUserId(userId: number): Promise<Posts[]> {
+    const posts = await this.posts.getAllPostsByUserId(userId);
+    if (posts.length === 0) throw new NotFoundException('No posts found');
+    try {
+      return posts;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to get posts');
     }
-
-    return posts;
   }
 
   async updatePost(
-    userId: number,
-    postId: number,
     dto: UpdatePostDTO,
-  ): Promise<Posts> {
-    const post = await this.findPostById(postId);
-
-    this.validatePostOwnership(post, userId);
-
-    return this.prisma.posts.update({
-      where: {
-        id: postId,
-      },
-      data: {
-        ...dto,
-      },
-    });
-  }
-
-  async deletePostById(
-    userId: number,
-    postId: number,
-  ): Promise<{ msg: string }> {
-    const post = await this.findPostById(postId);
-
-    this.validatePostOwnership(post, userId);
-
-    await this.prisma.posts.delete({
-      where: {
-        id: postId,
-      },
-    });
-
-    return { msg: 'Post deleted.' };
-  }
-
-  private async findPostById(postId: number): Promise<Posts | null> {
-    return this.prisma.posts.findUnique({
-      where: {
-        id: postId,
-      },
-    });
-  }
-
-  private async findPostByIdAndUserId(
-    postId: number,
+    id: string,
     userId: number,
   ): Promise<Posts | null> {
-    return this.prisma.posts.findFirst({
-      where: {
-        id: postId,
-        userId,
-      },
-    });
+    const post = await this.posts.getPostById(id);
+
+    if (!post) throw new NotFoundException('Post not found');
+
+    if (post.userId !== userId) throw new ForbiddenException('Access denied');
+    try {
+      return await this.posts.updatePost(id, dto);
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to update post');
+    }
   }
 
-  private validatePostOwnership(post: Posts | null, userId: number): void {
-    if (!post) {
-      throw new NotFoundException(
-        `The post you're trying to edit/delete does not exist.`,
-      );
-    }
+  async deletePost(userId: number, id: string): Promise<MessageResponse> {
+    const post = await this.posts.getPostById(id);
 
-    if (post.userId !== userId) {
-      throw new ForbiddenException(
-        `You don't have permission to edit/delete this post.`,
-      );
+    if (!post) throw new NotFoundException('Post not found');
+
+    if (post.userId !== userId) throw new ForbiddenException('Access denied');
+    try {
+      await this.posts.deletePost(id);
+
+      return { msg: 'Post deleted' };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to delete post');
     }
   }
 }

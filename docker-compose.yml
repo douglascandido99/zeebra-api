@@ -2,20 +2,16 @@ version: '3.8'
 
 services:
   postgres:
-    image: 'postgres:${POSTGRES_VERSION:?err}'
-    container_name: zeebra_dev
+    image: 'postgres:${POSTGRES_VERSION?err}'
+    container_name: auth-api
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?err}
       POSTGRES_USER: ${POSTGRES_USER:?err}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err}
-    volumes:
-      - ./data:/var/lib/postgresql/data
     ports:
-      - '${POSTGRES_PORT:?err}:5432'
-    networks:
-      - zeebra_dev
-    restart: always
+      - '${POSTGRES_PORT?err}:5432'
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
 
-networks:
-  zeebra_dev:
-    driver: bridge
+volumes:
+  postgres_data:
