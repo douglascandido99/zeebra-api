@@ -9,54 +9,53 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { IPosts } from './interfaces/posts.interface';
-import { Posts } from '@prisma/client';
 import { PostsService } from './posts.service';
 import { CreatePostDTO } from './dto/create-post.dto';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { UpdatePostDTO } from './dto/update-post.dto';
-import { JwtGuard } from 'src/auth/guard/jwt.guard';
-import { GetUser } from 'src/auth/decorator/get-user.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { Posts } from '@prisma/client';
+import { MessageResponse } from 'src/common/protocols/interfaces/message-response.interface';
 
-@UseGuards(JwtGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('posts')
-export class PostsController implements IPosts {
+export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post('create')
   async createPost(
-    @GetUser('id') userId: number,
     @Body() dto: CreatePostDTO,
+    @GetUser('id', ParseIntPipe) userId: number,
   ): Promise<Posts> {
-    return await this.postsService.createPost(userId, dto);
+    return await this.postsService.createPost(dto, userId);
   }
 
   @Get(':id')
-  async getPostById(
-    @GetUser('id') userId: number,
-    @Param('id', ParseIntPipe) postId: number,
-  ): Promise<Posts> {
-    return await this.postsService.getPostById(userId, postId);
+  async getPostById(@Param('id') id: string): Promise<Posts> {
+    return await this.postsService.getPostById(id);
   }
 
-  @Get()
-  async getAllPosts(@GetUser('id') userId: number): Promise<Posts[]> {
-    return await this.postsService.getAllPosts(userId);
+  @Get(':userId/posts')
+  async getAllPostsByUserId(
+    @Param('userId', ParseIntPipe) userId: number,
+  ): Promise<Posts[]> {
+    return await this.postsService.getAllPostsByUserId(userId);
   }
 
   @Patch(':id')
   async updatePost(
-    @GetUser('id') userId: number,
-    @Param('id', ParseIntPipe) postId: number,
     @Body() dto: UpdatePostDTO,
-  ): Promise<Posts> {
-    return await this.postsService.updatePost(userId, postId, dto);
+    @Param('id') id: string,
+    @GetUser('id', ParseIntPipe) userId: number,
+  ): Promise<Posts | null> {
+    return await this.postsService.updatePost(dto, id, userId);
   }
 
   @Delete(':id')
-  async deletePostById(
-    @GetUser('id') userId: number,
-    @Param('id', ParseIntPipe) postId: number,
-  ): Promise<{ msg: string }> {
-    return await this.postsService.deletePostById(userId, postId);
+  async deletePost(
+    @Param('id') id: string,
+    @GetUser('id', ParseIntPipe) userId: number,
+  ): Promise<MessageResponse> {
+    return await this.postsService.deletePost(userId, id);
   }
 }

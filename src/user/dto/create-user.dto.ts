@@ -6,22 +6,24 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { ICreateUser } from '../interfaces/create-user.interface';
 
-export class CreateUserDTO implements ICreateUser {
+export class CreateUserDTO {
   @IsNotEmpty()
   @IsString()
   @Length(1, 50)
   readonly name: string;
 
   @IsNotEmpty()
-  @IsEmail()
   @IsString()
+  @IsEmail()
   readonly email: string;
 
   @IsNotEmpty()
+  @IsString()
   @Length(1, 30)
-  @Matches(RegExp(/^[A-Za-z0-9-_]+$/))
+  @Matches(RegExp(/^[A-Za-z0-9_]+$/), {
+    message: 'Usernames can only have alphanumeric characters and underscores',
+  })
   readonly username: string;
 
   @IsNotEmpty()

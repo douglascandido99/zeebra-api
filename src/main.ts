@@ -9,7 +9,6 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
-  app.enableCors();
-  await app.listen(process.env.BACKEND_PORT || 3001);
+  await app.listen(process.env.APP_PORT || 3000);
 }
 bootstrap();
